@@ -8,13 +8,15 @@ interface CurrencyInputFieldProps {
   value: string;
   onChange: (value: string) => void;
   error?: string;
+  readOnly?: boolean;
 }
 
 export function CurrencyInputField({
   label,
   value,
   onChange,
-  error
+  error,
+  readOnly = false
 }: CurrencyInputFieldProps) {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Allow only numbers
@@ -35,13 +37,16 @@ export function CurrencyInputField({
           value={value}
           onChange={handleChange}
           placeholder="Enter amount..."
+          readOnly={readOnly}
           className={cn(
             "pl-8",
-            error && "border-destructive"
+            error && "border-destructive",
+            readOnly && "bg-gray-50"
           )}
         />
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
+      {readOnly && <p className="text-xs text-muted-foreground">This amount is fixed</p>}
     </div>
   );
 }

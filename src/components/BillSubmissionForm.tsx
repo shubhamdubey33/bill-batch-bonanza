@@ -30,6 +30,9 @@ const billTypeLabels: Record<BillType, string> = {
   bike: "Bike"
 };
 
+// Fixed amount for bike bills
+const BIKE_FIXED_AMOUNT = "150";
+
 const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState<string>("commonDetails");
@@ -70,11 +73,21 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
 
   // Toggle bill type selection
   const toggleBillType = (type: BillType) => {
-    setSelectedTypes(prev => 
-      prev.includes(type) 
+    setSelectedTypes(prev => {
+      // If adding bike, set fixed amount
+      if (!prev.includes(type) && type === "bike") {
+        handleCommonFieldChange("amount", BIKE_FIXED_AMOUNT);
+      }
+      
+      // If removing bike and bike was the only type that determined the amount
+      if (prev.includes(type) && type === "bike" && prev.length === 1) {
+        handleCommonFieldChange("amount", 0);
+      }
+      
+      return prev.includes(type) 
         ? prev.filter(t => t !== type) 
-        : [...prev, type]
-    );
+        : [...prev, type];
+    });
   };
 
   // Validate the form
@@ -213,6 +226,12 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
     return activeTab === selectedTypes[selectedTypes.length - 1];
   };
 
+  // Determine if amount field should be editable
+  const isAmountFieldEditable = () => {
+    // If bike is the only selected type, amount is not editable
+    return !(selectedTypes.length === 1 && selectedTypes[0] === "bike");
+  };
+
   // Render tab content for common details
   const renderCommonDetailsTab = () => (
     <div className="space-y-6">
@@ -255,12 +274,31 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
           />
         </div>
 
-        <CurrencyInputField
-          label="Amount (₹)"
-          value={commonFields.amount.toString()}
-          onChange={(value) => handleCommonFieldChange("amount", value)}
-          error={errors.amount}
-        />
+        {isAmountFieldEditable() ? (
+          <CurrencyInputField
+            label="Amount (₹)"
+            value={commonFields.amount.toString()}
+            onChange={(value) => handleCommonFieldChange("amount", value)}
+            error={errors.amount}
+          />
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor="fixed-amount">Amount (₹)</Label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
+                ₹
+              </div>
+              <Input
+                id="fixed-amount"
+                type="text"
+                value={BIKE_FIXED_AMOUNT}
+                readOnly
+                className="pl-8 bg-gray-50"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Fixed amount for bike bills</p>
+          </div>
+        )}
 
         <div>
           <Label htmlFor="remark">Remark</Label>
