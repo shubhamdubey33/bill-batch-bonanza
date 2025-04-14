@@ -1,37 +1,20 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { DatePickerField } from "./DatePickerField";
-import { TimePickerField } from "./TimePickerField";
-import { CurrencyInputField } from "./CurrencyInputField";
-import { FileUploadField } from "./FileUploadField";
-import { PersonSelectionField } from "./PersonSelectionField";
-import { BaseBill, Bill, PersonInvolved } from "@/types/bill";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Bill, PersonInvolved } from "@/types/bill";
 import { useToast } from "@/hooks/use-toast";
+import { BaseBillFormFields, BillSpecificFields } from "./bill-submission-form/types";
+import { BillTypeSelector } from "./bill-submission-form/BillTypeSelector";
+import { CommonDetailsForm } from "./bill-submission-form/CommonDetailsForm";
+import { BillTypeForm } from "./bill-submission-form/BillTypeForms";
+import { FormNavigation } from "./bill-submission-form/FormNavigation";
+import { BillType, billTypeLabels, BIKE_FIXED_AMOUNT } from "./bill-submission-form/bill-types";
 
 interface BillSubmissionFormProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-type BillType = "food" | "cab" | "stay" | "miscellaneous" | "bike";
-
-const billTypeLabels: Record<BillType, string> = {
-  food: "Food",
-  cab: "Cab",
-  stay: "Stay",
-  miscellaneous: "Miscellaneous",
-  bike: "Bike"
-};
-
-// Fixed amount for bike bills
-const BIKE_FIXED_AMOUNT = "150";
 
 const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
   const { toast } = useToast();
@@ -39,14 +22,14 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
   const [selectedTypes, setSelectedTypes] = useState<BillType[]>([]);
   
   // Common fields shared across all bill types
-  const [commonFields, setCommonFields] = useState<Omit<BaseBill, "amount" | "personsInvolved" | "status">>({
+  const [commonFields, setCommonFields] = useState<Omit<BaseBillFormFields, "amount" | "personsInvolved" | "status">>({
     date: undefined as unknown as Date,
     time: "",
     remark: "",
   });
 
   // Store specific fields for each bill type
-  const [billSpecificFields, setBillSpecificFields] = useState<Record<BillType, any>>({
+  const [billSpecificFields, setBillSpecificFields] = useState<BillSpecificFields>({
     food: { amount: "0", personsInvolved: [], attachedBill: undefined },
     cab: { amount: "0", personsInvolved: [], attachedBill: undefined },
     stay: { amount: "0", personsInvolved: [], attachedBill: undefined },
@@ -215,116 +198,6 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
     return activeTab === selectedTypes[selectedTypes.length - 1];
   };
 
-  // Render tab content for common details
-  const renderCommonDetailsTab = () => (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6">
-        <div>
-          <Label className="mb-2 block">Bill Types</Label>
-          <div className="flex flex-wrap gap-4">
-            {(Object.keys(billTypeLabels) as BillType[]).map((type) => (
-              <div key={type} className="flex items-center space-x-2">
-                <Checkbox 
-                  id={`bill-type-${type}`} 
-                  checked={selectedTypes.includes(type)}
-                  onCheckedChange={() => toggleBillType(type)}
-                />
-                <label
-                  htmlFor={`bill-type-${type}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  {billTypeLabels[type]}
-                </label>
-              </div>
-            ))}
-          </div>
-          {errors.billType && <p className="text-sm text-destructive mt-2">{errors.billType}</p>}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <DatePickerField
-            label="Date"
-            value={commonFields.date}
-            onChange={(date) => handleCommonFieldChange("date", date)}
-            error={errors.date}
-          />
-          
-          <TimePickerField
-            label="Time"
-            value={commonFields.time}
-            onChange={(time) => handleCommonFieldChange("time", time)}
-            error={errors.time}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="remark">Remark</Label>
-          <Textarea
-            id="remark"
-            placeholder="Enter any additional information..."
-            value={commonFields.remark}
-            onChange={(e) => handleCommonFieldChange("remark", e.target.value)}
-            className="resize-none min-h-[100px]"
-          />
-        </div>
-      </div>
-    </div>
-  );
-
-  // Render tab content for specific bill types
-  const renderBillTypeTab = (type: BillType) => (
-    <div className="space-y-6">
-      <h3 className="text-lg font-medium">{billTypeLabels[type]} Bill Details</h3>
-      
-      <div className="grid grid-cols-1 gap-6">
-        {/* Amount field specific to the bill type */}
-        {type === "bike" ? (
-          <CurrencyInputField
-            label="Amount (₹)"
-            value={billSpecificFields[type].amount}
-            onChange={(value) => handleSpecificFieldChange(type, "amount", value)}
-            error={errors[`${type}_amount`]}
-            readOnly={true}
-          />
-        ) : (
-          <CurrencyInputField
-            label="Amount (₹)"
-            value={billSpecificFields[type].amount}
-            onChange={(value) => handleSpecificFieldChange(type, "amount", value)}
-            error={errors[`${type}_amount`]}
-          />
-        )}
-
-        {type === "bike" ? (
-          <div>
-            <Label htmlFor="bikeNumber">Bike Number</Label>
-            <Input
-              id="bikeNumber"
-              placeholder="Enter bike number"
-              value={billSpecificFields.bike.bikeNumber}
-              onChange={(e) => handleSpecificFieldChange("bike", "bikeNumber", e.target.value)}
-              className={errors.bike_number ? "border-destructive" : ""}
-            />
-            {errors.bike_number && <p className="text-sm text-destructive mt-1">{errors.bike_number}</p>}
-          </div>
-        ) : (
-          <FileUploadField
-            label="Attach Bill"
-            value={billSpecificFields[type].attachedBill}
-            onChange={(file) => handleSpecificFieldChange(type, "attachedBill", file)}
-          />
-        )}
-        
-        <PersonSelectionField
-          label="Persons Involved"
-          value={billSpecificFields[type].personsInvolved}
-          onChange={(persons) => handleSpecificFieldChange(type, "personsInvolved", persons)}
-          error={errors[`${type}_persons`]}
-        />
-      </div>
-    </div>
-  );
-
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[600px]">
@@ -346,39 +219,39 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
           </TabsList>
           
           <TabsContent value="commonDetails">
-            {renderCommonDetailsTab()}
+            <div className="space-y-6">
+              <BillTypeSelector 
+                selectedTypes={selectedTypes}
+                toggleBillType={toggleBillType}
+                error={errors.billType}
+              />
+              <CommonDetailsForm
+                commonFields={commonFields}
+                handleCommonFieldChange={handleCommonFieldChange}
+                errors={errors}
+              />
+            </div>
           </TabsContent>
           
           {selectedTypes.map((type) => (
             <TabsContent key={type} value={type}>
-              {renderBillTypeTab(type)}
+              <BillTypeForm 
+                type={type}
+                billFields={billSpecificFields[type]}
+                handleFieldChange={(field, value) => handleSpecificFieldChange(type, field, value)}
+                errors={errors}
+              />
             </TabsContent>
           ))}
         </Tabs>
         
-        <div className="flex justify-between mt-6">
-          {activeTab !== "commonDetails" ? (
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={handlePrevious}
-            >
-              Previous
-            </Button>
-          ) : (
-            <div></div>
-          )}
-          
-          {isLastTab() ? (
-            <Button type="button" onClick={handleSubmit}>
-              Submit Bills
-            </Button>
-          ) : (
-            <Button type="button" onClick={handleNext}>
-              Next
-            </Button>
-          )}
-        </div>
+        <FormNavigation 
+          activeTab={activeTab}
+          isLastTab={isLastTab()}
+          handlePrevious={handlePrevious}
+          handleNext={handleNext}
+          handleSubmit={handleSubmit}
+        />
       </DialogContent>
     </Dialog>
   );
