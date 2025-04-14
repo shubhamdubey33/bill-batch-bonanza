@@ -39,20 +39,19 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
   const [selectedTypes, setSelectedTypes] = useState<BillType[]>([]);
   
   // Common fields shared across all bill types
-  const [commonFields, setCommonFields] = useState<Omit<BaseBill, "personsInvolved" | "status">>({
+  const [commonFields, setCommonFields] = useState<Omit<BaseBill, "amount" | "personsInvolved" | "status">>({
     date: undefined as unknown as Date,
     time: "",
-    amount: 0,
     remark: "",
   });
 
   // Store specific fields for each bill type
   const [billSpecificFields, setBillSpecificFields] = useState<Record<BillType, any>>({
-    food: { personsInvolved: [], attachedBill: undefined },
-    cab: { personsInvolved: [], attachedBill: undefined },
-    stay: { personsInvolved: [], attachedBill: undefined },
-    miscellaneous: { personsInvolved: [], attachedBill: undefined },
-    bike: { bikeNumber: "", personsInvolved: [] }
+    food: { amount: "0", personsInvolved: [], attachedBill: undefined },
+    cab: { amount: "0", personsInvolved: [], attachedBill: undefined },
+    stay: { amount: "0", personsInvolved: [], attachedBill: undefined },
+    miscellaneous: { amount: "0", personsInvolved: [], attachedBill: undefined },
+    bike: { amount: BIKE_FIXED_AMOUNT, bikeNumber: "", personsInvolved: [] }
   });
 
   // Form validation errors
@@ -74,16 +73,6 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
   // Toggle bill type selection
   const toggleBillType = (type: BillType) => {
     setSelectedTypes(prev => {
-      // If adding bike, set fixed amount
-      if (!prev.includes(type) && type === "bike") {
-        handleCommonFieldChange("amount", BIKE_FIXED_AMOUNT);
-      }
-      
-      // If removing bike and bike was the only type that determined the amount
-      if (prev.includes(type) && type === "bike" && prev.length === 1) {
-        handleCommonFieldChange("amount", 0);
-      }
-      
       return prev.includes(type) 
         ? prev.filter(t => t !== type) 
         : [...prev, type];
@@ -103,13 +92,14 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
       newErrors.time = "Time is required";
     }
     
-    if (!commonFields.amount) {
-      newErrors.amount = "Amount is required";
-    }
-    
     // Validate bill-specific fields for each selected type
     selectedTypes.forEach(type => {
-      // For all types except bike, validate personsInvolved
+      // Validate amount for each bill type
+      if (!billSpecificFields[type].amount || parseInt(billSpecificFields[type].amount) <= 0) {
+        newErrors[`${type}_amount`] = "Amount is required";
+      }
+      
+      // For all types, validate personsInvolved
       if (billSpecificFields[type].personsInvolved.length === 0) {
         newErrors[`${type}_persons`] = "At least one person must be selected";
       }
@@ -168,7 +158,7 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
       const baseFields = {
         ...commonFields,
         status: "validator_pending" as const,
-        amount: Number(commonFields.amount),
+        amount: Number(billSpecificFields[type].amount),
       };
       
       if (type === "bike") {
@@ -207,15 +197,14 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
     setCommonFields({
       date: undefined as unknown as Date,
       time: "",
-      amount: 0,
       remark: "",
     });
     setBillSpecificFields({
-      food: { personsInvolved: [], attachedBill: undefined },
-      cab: { personsInvolved: [], attachedBill: undefined },
-      stay: { personsInvolved: [], attachedBill: undefined },
-      miscellaneous: { personsInvolved: [], attachedBill: undefined },
-      bike: { bikeNumber: "", personsInvolved: [] }
+      food: { amount: "0", personsInvolved: [], attachedBill: undefined },
+      cab: { amount: "0", personsInvolved: [], attachedBill: undefined },
+      stay: { amount: "0", personsInvolved: [], attachedBill: undefined },
+      miscellaneous: { amount: "0", personsInvolved: [], attachedBill: undefined },
+      bike: { amount: BIKE_FIXED_AMOUNT, bikeNumber: "", personsInvolved: [] }
     });
     setErrors({});
     setActiveTab("commonDetails");
@@ -224,12 +213,6 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
   // Check if current tab is the last one
   const isLastTab = () => {
     return activeTab === selectedTypes[selectedTypes.length - 1];
-  };
-
-  // Determine if amount field should be editable
-  const isAmountFieldEditable = () => {
-    // If bike is the only selected type, amount is not editable
-    return !(selectedTypes.length === 1 && selectedTypes[0] === "bike");
   };
 
   // Render tab content for common details
@@ -274,32 +257,6 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
           />
         </div>
 
-        {isAmountFieldEditable() ? (
-          <CurrencyInputField
-            label="Amount (₹)"
-            value={commonFields.amount.toString()}
-            onChange={(value) => handleCommonFieldChange("amount", value)}
-            error={errors.amount}
-          />
-        ) : (
-          <div className="space-y-2">
-            <Label htmlFor="fixed-amount">Amount (₹)</Label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">
-                ₹
-              </div>
-              <Input
-                id="fixed-amount"
-                type="text"
-                value={BIKE_FIXED_AMOUNT}
-                readOnly
-                className="pl-8 bg-gray-50"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">Fixed amount for bike bills</p>
-          </div>
-        )}
-
         <div>
           <Label htmlFor="remark">Remark</Label>
           <Textarea
@@ -320,6 +277,24 @@ const BillSubmissionForm = ({ isOpen, onClose }: BillSubmissionFormProps) => {
       <h3 className="text-lg font-medium">{billTypeLabels[type]} Bill Details</h3>
       
       <div className="grid grid-cols-1 gap-6">
+        {/* Amount field specific to the bill type */}
+        {type === "bike" ? (
+          <CurrencyInputField
+            label="Amount (₹)"
+            value={billSpecificFields[type].amount}
+            onChange={(value) => handleSpecificFieldChange(type, "amount", value)}
+            error={errors[`${type}_amount`]}
+            readOnly={true}
+          />
+        ) : (
+          <CurrencyInputField
+            label="Amount (₹)"
+            value={billSpecificFields[type].amount}
+            onChange={(value) => handleSpecificFieldChange(type, "amount", value)}
+            error={errors[`${type}_amount`]}
+          />
+        )}
+
         {type === "bike" ? (
           <div>
             <Label htmlFor="bikeNumber">Bike Number</Label>
