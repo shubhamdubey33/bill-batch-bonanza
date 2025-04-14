@@ -20,7 +20,7 @@ export function FoodBillForm({ type, billFields, handleFieldChange, errors }: Bi
         />
         <FileUploadField
           label="Attach Bill"
-          value={billFields.attachedBill}
+          value={type !== "bike" ? billFields.attachedBill : undefined}
           onChange={(file) => handleFieldChange("attachedBill", file)}
         />
         <PersonSelectionField
@@ -47,7 +47,7 @@ export function CabBillForm({ type, billFields, handleFieldChange, errors }: Bil
         />
         <FileUploadField
           label="Attach Bill"
-          value={billFields.attachedBill}
+          value={type !== "bike" ? billFields.attachedBill : undefined}
           onChange={(file) => handleFieldChange("attachedBill", file)}
         />
         <PersonSelectionField
@@ -74,7 +74,7 @@ export function StayBillForm({ type, billFields, handleFieldChange, errors }: Bi
         />
         <FileUploadField
           label="Attach Bill"
-          value={billFields.attachedBill}
+          value={type !== "bike" ? billFields.attachedBill : undefined}
           onChange={(file) => handleFieldChange("attachedBill", file)}
         />
         <PersonSelectionField
@@ -101,7 +101,7 @@ export function MiscellaneousBillForm({ type, billFields, handleFieldChange, err
         />
         <FileUploadField
           label="Attach Bill"
-          value={billFields.attachedBill}
+          value={type !== "bike" ? billFields.attachedBill : undefined}
           onChange={(file) => handleFieldChange("attachedBill", file)}
         />
         <PersonSelectionField
@@ -132,7 +132,7 @@ export function BikeBillForm({ type, billFields, handleFieldChange, errors }: Bi
           <Input
             id="bikeNumber"
             placeholder="Enter bike number"
-            value={billFields.bikeNumber}
+            value={type === "bike" ? billFields.bikeNumber || "" : ""}
             onChange={(e) => handleFieldChange("bikeNumber", e.target.value)}
             className={errors.bike_number ? "border-destructive" : ""}
           />

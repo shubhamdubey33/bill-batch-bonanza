@@ -13,8 +13,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
-import { useState } from "react";
+import { Check, ChevronsUpDown, Loader2, Plus, X } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { PersonInvolved, mockUsers } from "@/types/bill";
@@ -33,6 +33,10 @@ export function PersonSelectionField({
   error
 }: PersonSelectionFieldProps) {
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<PersonInvolved[]>([]);
+  const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const addPerson = (person: PersonInvolved) => {
     // Check if person already exists in the list
@@ -49,10 +53,59 @@ export function PersonSelectionField({
     onChange(value.filter(person => person._id !== id));
   };
 
-  // Filter out already selected persons
-  const availablePersons = mockUsers.filter(
-    user => !value.some(person => person._id === user._id)
-  );
+  // Handle search input changes with debounce
+  const handleSearchChange = (input: string) => {
+    setSearchTerm(input);
+    
+    // Clear any existing timeout
+    if (debounceTimeout) {
+      clearTimeout(debounceTimeout);
+    }
+    
+    // Set a new timeout for the search
+    const timeout = setTimeout(() => {
+      searchPersons(input);
+    }, 300); // 300ms debounce
+    
+    setDebounceTimeout(timeout);
+  };
+
+  // Perform the search (simulating a backend call with mockUsers)
+  const searchPersons = async (input: string) => {
+    if (input.trim().length === 0) {
+      setSearchResults([]);
+      return;
+    }
+    
+    setIsSearching(true);
+    
+    try {
+      // In a real implementation, this would be an API call
+      // For now, we'll simulate a backend search with mockUsers
+      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+      
+      const results = mockUsers.filter(user => {
+        // Case-insensitive search for name or employee ID
+        return (
+          user.name.toLowerCase().includes(input.toLowerCase()) ||
+          user.employeeId.toLowerCase().includes(input.toLowerCase())
+        );
+      });
+      
+      setSearchResults(results);
+    } catch (error) {
+      console.error("Error searching for persons:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Get the list of persons to display
+  // If search term exists, use search results; otherwise use available persons
+  const displayPersons = searchTerm
+    ? searchResults
+    : mockUsers.filter(user => !value.some(person => person._id === user._id));
 
   return (
     <div className="space-y-2">
@@ -99,13 +152,27 @@ export function PersonSelectionField({
           </PopoverTrigger>
           <PopoverContent className="w-full p-0">
             <Command>
-              <CommandInput placeholder="Search people..." />
-              <CommandEmpty>No person found.</CommandEmpty>
+              <CommandInput 
+                placeholder="Search people..." 
+                value={searchTerm}
+                onValueChange={handleSearchChange}
+              />
+              <CommandEmpty>
+                {isSearching ? (
+                  <div className="flex items-center justify-center py-2">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Searching...
+                  </div>
+                ) : (
+                  "No person found."
+                )}
+              </CommandEmpty>
               <CommandGroup>
-                {availablePersons.map(person => (
+                {displayPersons.map(person => (
                   <CommandItem
                     key={person._id}
                     onSelect={() => addPerson(person)}
+                    className="flex items-center"
                   >
                     <Check
                       className={cn(
