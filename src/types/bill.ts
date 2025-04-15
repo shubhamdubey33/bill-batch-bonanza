@@ -1,5 +1,20 @@
 
-// Base bill interface
+// Person Types
+export interface PersonInvolved {
+  _id: string;
+  name: string;
+  employeeId: string;
+}
+
+// Bill Status Types
+export type BillStatus = 
+  | "validator_pending"
+  | "validator_approved" 
+  | "approver_pending" 
+  | "approver_rejected" 
+  | "approver_approved";
+
+// Base Bill Interface
 export interface BaseBill {
   _id?: string;
   date: Date;
@@ -13,35 +28,23 @@ export interface BaseBill {
   updatedAt?: Date;
 }
 
-export type BillStatus = "validator_pending" | "validator_approved" | "approver_pending" | "approver_rejected" | "approver_approved";
-
-export interface PersonInvolved {
-  _id: string;
-  name: string;
-  employeeId: string;
-}
-
-// Food bill interface
+// Specific Bill Types
 export interface FoodBill extends BaseBill {
   kind: "food";
 }
 
-// Cab bill interface
 export interface CabBill extends BaseBill {
   kind: "cab";
 }
 
-// Stay bill interface
 export interface StayBill extends BaseBill {
   kind: "stay";
 }
 
-// Miscellaneous bill interface
 export interface MiscellaneousBill extends BaseBill {
   kind: "miscellaneous";
 }
 
-// Bike bill interface
 export interface BikeBill extends BaseBill {
   kind: "bike";
   bikeNumber: string;
@@ -50,8 +53,8 @@ export interface BikeBill extends BaseBill {
 // Union type for all bill types
 export type Bill = FoodBill | CabBill | StayBill | MiscellaneousBill | BikeBill;
 
-// Mock users data for demo purposes
-export const mockUsers = [
+// Mock data
+export const mockUsers: PersonInvolved[] = [
   { _id: "1", name: "Shubham Dubey", employeeId: "EMP001" },
   { _id: "2", name: "Jane Doe", employeeId: "EMP002" },
   { _id: "3", name: "John Smith", employeeId: "EMP003" },
