@@ -13,7 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Check, ChevronsUpDown, Loader2, Plus, X } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -39,68 +39,49 @@ export function PersonSelectionField({
   const [debounceTimeout, setDebounceTimeout] = useState<NodeJS.Timeout | null>(null);
 
   const addPerson = (person: PersonInvolved) => {
-    // Check if person already exists in the list
     if (!value.some(p => p._id === person._id)) {
-      // Only allow up to 4 persons
       if (value.length < 4) {
         onChange([...value, person]);
+        setSearchTerm(""); // Clear search after adding
+        setOpen(false);    // Close popover after adding
       }
     }
-    setOpen(false);
-    setSearchTerm("");
   };
 
-  const removePerson = (id: string) => {
-    onChange(value.filter(person => person._id !== id));
+  const removePerson = (personToRemove: PersonInvolved) => {
+    onChange(value.filter(person => person._id !== personToRemove._id));
   };
 
-  // Handle search input changes with debounce
   const handleSearchChange = (input: string) => {
     setSearchTerm(input);
     
-    // Clear any existing timeout
     if (debounceTimeout) {
       clearTimeout(debounceTimeout);
     }
     
-    // Set a new timeout for the search
     const timeout = setTimeout(() => {
       searchPersons(input);
-    }, 300); // 300ms debounce
+    }, 300);
     
     setDebounceTimeout(timeout);
   };
 
-  // Clean up the timeout on component unmount
-  useEffect(() => {
-    return () => {
-      if (debounceTimeout) {
-        clearTimeout(debounceTimeout);
-      }
-    };
-  }, [debounceTimeout]);
-
-  // Perform the search (simulating a backend call with mockUsers)
   const searchPersons = async (input: string) => {
-    if (input.trim().length === 0) {
+    if (!input.trim()) {
       setSearchResults([]);
+      setIsSearching(false);
       return;
     }
-    
+
     setIsSearching(true);
-    
     try {
-      // In a real implementation, this would be an API call
-      // For now, we'll simulate a backend search with mockUsers
-      await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+      // Simulating API call with mockUsers
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      const results = mockUsers.filter(user => {
-        // Case-insensitive search for name or employee ID
-        return (
-          user.name.toLowerCase().includes(input.toLowerCase()) ||
-          user.employeeId.toLowerCase().includes(input.toLowerCase())
-        );
-      });
+      const results = mockUsers.filter(user => 
+        user.name.toLowerCase().includes(input.toLowerCase()) ||
+        user.employeeId.toLowerCase().includes(input.toLowerCase())
+      );
       
       setSearchResults(results);
     } catch (error) {
@@ -111,19 +92,14 @@ export function PersonSelectionField({
     }
   };
 
-  // Get the list of persons to display
-  // If search term exists, use search results; otherwise use available persons
-  const displayPersons = searchTerm
-    ? searchResults
-    : mockUsers.filter(user => !value.some(person => person._id === user._id));
-
-  // Reset search when popover closes
+  // Cleanup on unmount
   useEffect(() => {
-    if (!open) {
-      setSearchTerm("");
-      setSearchResults([]);
-    }
-  }, [open]);
+    return () => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+    };
+  }, [debounceTimeout]);
 
   return (
     <div className="space-y-2">
@@ -135,13 +111,18 @@ export function PersonSelectionField({
       </div>
       
       <div className="space-y-2">
-        <div className="flex flex-wrap gap-2 mb-2">
-          {value.map(person => (
-            <Badge key={person._id} variant="secondary" className="flex items-center gap-1">
-              {person.name}
-              <button 
-                onClick={() => removePerson(person._id)}
-                className="ml-1 rounded-full hover:bg-muted p-0.5"
+        <div className="flex flex-wrap gap-2 min-h-[2.5rem] p-2 border rounded-md">
+          {value.map((person) => (
+            <Badge
+              key={person._id}
+              variant="secondary"
+              className="flex items-center gap-1 py-1 px-2"
+            >
+              <span>{person.name}</span>
+              <button
+                type="button"
+                onClick={() => removePerson(person)}
+                className="ml-1 hover:bg-destructive/20 rounded-full p-0.5 transition-colors"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -154,64 +135,60 @@ export function PersonSelectionField({
             <Button
               variant="outline"
               role="combobox"
+              aria-expanded={open}
               className={cn(
                 "w-full justify-between",
-                error && "border-destructive"
+                error && "border-destructive",
+                value.length >= 4 && "opacity-50 cursor-not-allowed"
               )}
               disabled={value.length >= 4}
             >
               <span>
                 {value.length >= 4 
                   ? "Maximum persons added" 
-                  : "Select a person"}
+                  : "Search by name or employee ID"}
               </span>
               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0">
+          <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
             <Command>
               <CommandInput 
-                placeholder="Search people..." 
+                placeholder="Type to search..."
                 value={searchTerm}
                 onValueChange={handleSearchChange}
               />
-              <CommandEmpty>
-                {isSearching ? (
-                  <div className="flex items-center justify-center py-2">
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Searching...
-                  </div>
-                ) : (
-                  "No person found."
-                )}
-              </CommandEmpty>
-              <CommandGroup>
-                {displayPersons.map(person => (
-                  <CommandItem
-                    key={person._id}
-                    onSelect={() => addPerson(person)}
-                    className="flex items-center"
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        "opacity-0"
-                      )}
-                    />
-                    <div className="flex flex-col">
-                      <span>{person.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        ID: {person.employeeId}
-                      </span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
+              {isSearching ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  <span>Searching...</span>
+                </div>
+              ) : (
+                <>
+                  <CommandEmpty>No person found</CommandEmpty>
+                  <CommandGroup>
+                    {searchResults.map((person) => (
+                      <CommandItem
+                        key={person._id}
+                        onSelect={() => addPerson(person)}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex flex-col">
+                          <span>{person.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ID: {person.employeeId}
+                          </span>
+                        </div>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </>
+              )}
             </Command>
           </PopoverContent>
         </Popover>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm text-destructive mt-1">{error}</p>}
     </div>
   );
 }
