@@ -11,32 +11,43 @@ export interface BaseBillFormFields {
   status: string;
 }
 
+// Define the specific fields for each bill type
+export interface FoodBillFields {
+  amount: string;
+  personsInvolved: PersonInvolved[];
+  attachedBill: File | string | undefined;
+}
+
+export interface CabBillFields {
+  amount: string;
+  personsInvolved: PersonInvolved[];
+  attachedBill: File | string | undefined;
+}
+
+export interface StayBillFields {
+  amount: string;
+  personsInvolved: PersonInvolved[];
+  attachedBill: File | string | undefined;
+}
+
+export interface MiscellaneousBillFields {
+  amount: string;
+  personsInvolved: PersonInvolved[];
+  attachedBill: File | string | undefined;
+}
+
+export interface BikeBillFields {
+  amount: string;
+  bikeNumber: string;
+  personsInvolved: PersonInvolved[];
+}
+
 export interface BillSpecificFields {
-  food: {
-    amount: string;
-    personsInvolved: PersonInvolved[];
-    attachedBill: File | string | undefined;
-  };
-  cab: {
-    amount: string;
-    personsInvolved: PersonInvolved[];
-    attachedBill: File | string | undefined;
-  };
-  stay: {
-    amount: string;
-    personsInvolved: PersonInvolved[];
-    attachedBill: File | string | undefined;
-  };
-  miscellaneous: {
-    amount: string;
-    personsInvolved: PersonInvolved[];
-    attachedBill: File | string | undefined;
-  };
-  bike: {
-    amount: string;
-    bikeNumber: string;
-    personsInvolved: PersonInvolved[];
-  };
+  food: FoodBillFields;
+  cab: CabBillFields;
+  stay: StayBillFields;
+  miscellaneous: MiscellaneousBillFields;
+  bike: BikeBillFields;
 }
 
 export interface BillFormProps {

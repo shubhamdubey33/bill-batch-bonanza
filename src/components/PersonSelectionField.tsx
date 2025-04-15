@@ -47,6 +47,7 @@ export function PersonSelectionField({
       }
     }
     setOpen(false);
+    setSearchTerm("");
   };
 
   const removePerson = (id: string) => {
@@ -69,6 +70,15 @@ export function PersonSelectionField({
     
     setDebounceTimeout(timeout);
   };
+
+  // Clean up the timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimeout) {
+        clearTimeout(debounceTimeout);
+      }
+    };
+  }, [debounceTimeout]);
 
   // Perform the search (simulating a backend call with mockUsers)
   const searchPersons = async (input: string) => {
@@ -106,6 +116,14 @@ export function PersonSelectionField({
   const displayPersons = searchTerm
     ? searchResults
     : mockUsers.filter(user => !value.some(person => person._id === user._id));
+
+  // Reset search when popover closes
+  useEffect(() => {
+    if (!open) {
+      setSearchTerm("");
+      setSearchResults([]);
+    }
+  }, [open]);
 
   return (
     <div className="space-y-2">

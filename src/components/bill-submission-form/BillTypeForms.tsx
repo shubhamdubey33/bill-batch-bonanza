@@ -18,11 +18,13 @@ export function FoodBillForm({ type, billFields, handleFieldChange, errors }: Bi
           onChange={(value) => handleFieldChange("amount", value)}
           error={errors[`${type}_amount`]}
         />
-        <FileUploadField
-          label="Attach Bill"
-          value={type !== "bike" ? billFields.attachedBill : undefined}
-          onChange={(file) => handleFieldChange("attachedBill", file)}
-        />
+        {'attachedBill' in billFields && (
+          <FileUploadField
+            label="Attach Bill"
+            value={billFields.attachedBill}
+            onChange={(file) => handleFieldChange("attachedBill", file)}
+          />
+        )}
         <PersonSelectionField
           label="Persons Involved"
           value={billFields.personsInvolved}
@@ -45,11 +47,13 @@ export function CabBillForm({ type, billFields, handleFieldChange, errors }: Bil
           onChange={(value) => handleFieldChange("amount", value)}
           error={errors[`${type}_amount`]}
         />
-        <FileUploadField
-          label="Attach Bill"
-          value={type !== "bike" ? billFields.attachedBill : undefined}
-          onChange={(file) => handleFieldChange("attachedBill", file)}
-        />
+        {'attachedBill' in billFields && (
+          <FileUploadField
+            label="Attach Bill"
+            value={billFields.attachedBill}
+            onChange={(file) => handleFieldChange("attachedBill", file)}
+          />
+        )}
         <PersonSelectionField
           label="Persons Involved"
           value={billFields.personsInvolved}
@@ -72,11 +76,13 @@ export function StayBillForm({ type, billFields, handleFieldChange, errors }: Bi
           onChange={(value) => handleFieldChange("amount", value)}
           error={errors[`${type}_amount`]}
         />
-        <FileUploadField
-          label="Attach Bill"
-          value={type !== "bike" ? billFields.attachedBill : undefined}
-          onChange={(file) => handleFieldChange("attachedBill", file)}
-        />
+        {'attachedBill' in billFields && (
+          <FileUploadField
+            label="Attach Bill"
+            value={billFields.attachedBill}
+            onChange={(file) => handleFieldChange("attachedBill", file)}
+          />
+        )}
         <PersonSelectionField
           label="Persons Involved"
           value={billFields.personsInvolved}
@@ -99,11 +105,13 @@ export function MiscellaneousBillForm({ type, billFields, handleFieldChange, err
           onChange={(value) => handleFieldChange("amount", value)}
           error={errors[`${type}_amount`]}
         />
-        <FileUploadField
-          label="Attach Bill"
-          value={type !== "bike" ? billFields.attachedBill : undefined}
-          onChange={(file) => handleFieldChange("attachedBill", file)}
-        />
+        {'attachedBill' in billFields && (
+          <FileUploadField
+            label="Attach Bill"
+            value={billFields.attachedBill}
+            onChange={(file) => handleFieldChange("attachedBill", file)}
+          />
+        )}
         <PersonSelectionField
           label="Persons Involved"
           value={billFields.personsInvolved}
@@ -127,17 +135,19 @@ export function BikeBillForm({ type, billFields, handleFieldChange, errors }: Bi
           error={errors[`${type}_amount`]}
           readOnly={true}
         />
-        <div>
-          <Label htmlFor="bikeNumber">Bike Number</Label>
-          <Input
-            id="bikeNumber"
-            placeholder="Enter bike number"
-            value={type === "bike" ? billFields.bikeNumber || "" : ""}
-            onChange={(e) => handleFieldChange("bikeNumber", e.target.value)}
-            className={errors.bike_number ? "border-destructive" : ""}
-          />
-          {errors.bike_number && <p className="text-sm text-destructive mt-1">{errors.bike_number}</p>}
-        </div>
+        {'bikeNumber' in billFields && (
+          <div>
+            <Label htmlFor="bikeNumber">Bike Number</Label>
+            <Input
+              id="bikeNumber"
+              placeholder="Enter bike number"
+              value={billFields.bikeNumber}
+              onChange={(e) => handleFieldChange("bikeNumber", e.target.value)}
+              className={errors.bike_number ? "border-destructive" : ""}
+            />
+            {errors.bike_number && <p className="text-sm text-destructive mt-1">{errors.bike_number}</p>}
+          </div>
+        )}
         <PersonSelectionField
           label="Persons Involved"
           value={billFields.personsInvolved}
